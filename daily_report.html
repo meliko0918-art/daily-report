@@ -106,18 +106,36 @@
 
     <div class="section">
       <div class="section-title">配達実績</div>
-      <div class="field"><label>配達完了総数</label><input type="number" id="total-count" placeholder="0" inputmode="numeric" /></div>
       <div class="row2">
         <div class="field"><label>荷物配達完了数</label><input type="number" id="package-count" placeholder="0" inputmode="numeric" oninput="calcSales()" /></div>
         <div class="field"><label>ネコポス完了数</label><input type="number" id="nekopos-count" placeholder="0" inputmode="numeric" oninput="calcSales()" /></div>
       </div>
+      <div class="field"><label>配達完了総数（自動計算）</label><input type="number" id="total-count" placeholder="0" readonly style="background:#f0f0f0;color:#888;" /></div>
     </div>
 
     <div class="section">
       <div class="section-title">点呼・確認事項</div>
       <div class="row2">
-        <div class="field"><label>開始時点呼者名</label><input type="text" id="checker-start" placeholder="氏名" /></div>
-        <div class="field"><label>終了時点呼者名</label><input type="text" id="checker-end" placeholder="氏名" /></div>
+        <div class="field"><label>開始時点呼者名</label><select id="checker-start">
+          <option value="">選択してください</option>
+          <option value="所長">所長</option>
+          <option value="大沢さん">大沢さん</option>
+          <option value="山川さん">山川さん</option>
+          <option value="早坂さん">早坂さん</option>
+          <option value="乙坂さん">乙坂さん</option>
+          <option value="佐藤さん">佐藤さん</option>
+          <option value="その他">その他</option>
+        </select></div>
+        <div class="field"><label>終了時点呼者名</label><select id="checker-end">
+          <option value="">選択してください</option>
+          <option value="所長">所長</option>
+          <option value="大沢さん">大沢さん</option>
+          <option value="山川さん">山川さん</option>
+          <option value="早坂さん">早坂さん</option>
+          <option value="乙坂さん">乙坂さん</option>
+          <option value="佐藤さん">佐藤さん</option>
+          <option value="その他">その他</option>
+        </select></div>
       </div>
       <div class="field">
         <label>アルコール検査</label>
@@ -171,6 +189,7 @@ function calcSales() {
   const total = p * 180 + n * 50;
   document.getElementById('sales-display').textContent = '¥' + total.toLocaleString();
   document.getElementById('sales-breakdown').textContent = '荷物：' + p + '件 × ¥180 ＋ ネコポス：' + n + '件 × ¥50';
+  document.getElementById('total-count').value = p + n || '';
 }
 
 function getRadio(name) {
