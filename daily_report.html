@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="業務日報">
+<title>配送業務日報</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+  .app { max-width: 480px; margin: 0 auto; padding: 1rem; }
+  .header { text-align: center; padding: 1.5rem 0 1rem; border-bottom: 1px solid #e0e0e0; margin-bottom: 1.5rem; background: #fff; margin: 0 -1rem 1.5rem; padding: 1.5rem 1rem 1rem; }
+  .header h1 { font-size: 20px; font-weight: 600; }
+  .header p { font-size: 13px; color: #888; margin-top: 4px; }
+  .section { background: #fff; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+  .section-title { font-size: 11px; font-weight: 600; color: #888; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+  .field { margin-bottom: 12px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 13px; color: #666; margin-bottom: 4px; }
+  .field input, .field select { width: 100%; height: 44px; padding: 0 12px; font-size: 16px; border: 1px solid #e0e0e0; border-radius: 8px; background: #fafafa; color: #1a1a1a; font-family: inherit; -webkit-appearance: none; }
+  .field input:focus, .field select:focus { outline: none; border-color: #1a1a1a; background: #fff; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .sales-card { background: #1a1a1a; color: #fff; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .sales-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-bottom: 4px; }
+  .sales-amount { font-size: 32px; font-weight: 600; }
+  .sales-breakdown { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 4px; }
+  .radio-group { display: flex; gap: 8px; }
+  .radio-opt { flex: 1; }
+  .radio-opt input[type=radio] { display: none; }
+  .radio-opt label { display: block; text-align: center; padding: 10px 4px; border: 1px solid #e0e0e0; border-radius: 8px; font-size: 14px; cursor: pointer; color: #888; background: #fafafa; transition: all 0.15s; }
+  .radio-opt input[type=radio]:checked + label { border-color: #1a1a1a; background: #1a1a1a; color: #fff; font-weight: 500; }
+  .submit-btn { width: 100%; height: 52px; background: #1a1a1a; color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: inherit; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; }
+  .submit-btn:active { opacity: 0.8; }
+  .submit-btn:disabled { opacity: 0.4; }
+  .history-btn { width: 100%; height: 44px; background: #fff; color: #1a1a1a; border: 1px solid #e0e0e0; border-radius: 12px; font-size: 15px; cursor: pointer; font-family: inherit; }
+  .status-bar { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 10px; font-size: 14px; margin-bottom: 10px; }
+  .status-bar.loading { background: #f0f0f0; color: #666; }
+  .status-bar.success { background: #e6f4ea; color: #1e7e34; }
+  .status-bar.error { background: #fce8e6; color: #c62828; }
+  .spinner { width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #666; border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .history-view { display: none; }
+  .history-view.active { display: block; }
+  .form-view.hidden { display: none; }
+  .history-item { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .history-item:active { opacity: 0.7; }
+  .history-date { font-size: 15px; font-weight: 600; }
+  .history-meta { font-size: 13px; color: #888; margin-top: 4px; }
+  .back-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-size: 15px; color: #666; padding: 0; margin-bottom: 1rem; font-family: inherit; -webkit-tap-highlight-color: transparent; }
+  .detail-card { background: #fff; border-radius: 12px; overflow: hidden; }
+  .detail-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: #888; }
+  .detail-value { font-weight: 500; color: #1a1a1a; text-align: right; }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: #aaa; font-size: 14px; background: #fff; border-radius: 12px; }
+  .bottom-space { height: 2rem; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>配送業務日報</h1>
+    <p id="today-date"></p>
+  </div>
+
+  <div class="form-view" id="form-view">
+    <div class="sales-card">
+      <div class="sales-label">本日の売上（自動計算）</div>
+      <div class="sales-amount" id="sales-display">¥0</div>
+      <div class="sales-breakdown" id="sales-breakdown">荷物：0件 × ¥180 ＋ ネコポス：0件 × ¥50</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">基本情報</div>
+      <div class="field">
+        <label>日付</label>
+        <input type="date" id="date" />
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">勤務時間</div>
+      <div class="row2">
+        <div class="field"><label>開始時間</label><input type="time" id="start-time" /></div>
+        <div class="field"><label>1便終了</label><input type="time" id="end1" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>2便開始</label><input type="time" id="start2" /></div>
+        <div class="field"><label>2便終了</label><input type="time" id="end2" /></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>夜配開始</label><input type="time" id="night-start" /></div>
+        <div class="field"><label>夜配終了</label><input type="time" id="night-end" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">走行距離</div>
+      <div class="row2">
+        <div class="field"><label>開始走行距離 (km)</label><input type="number" id="odo-start" placeholder="0" inputmode="numeric" /></div>
+        <div class="field"><label>終了走行距離 (km)</label><input type="number" id="odo-end" placeholder="0" inputmode="numeric" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">配達実績</div>
+      <div class="field"><label>配達完了総数</label><input type="number" id="total-count" placeholder="0" inputmode="numeric" /></div>
+      <div class="row2">
+        <div class="field"><label>荷物配達完了数</label><input type="number" id="package-count" placeholder="0" inputmode="numeric" oninput="calcSales()" /></div>
+        <div class="field"><label>ネコポス完了数</label><input type="number" id="nekopos-count" placeholder="0" inputmode="numeric" oninput="calcSales()" /></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">点呼・確認事項</div>
+      <div class="row2">
+        <div class="field"><label>開始時点呼者名</label><input type="text" id="checker-start" placeholder="氏名" /></div>
+        <div class="field"><label>終了時点呼者名</label><input type="text" id="checker-end" placeholder="氏名" /></div>
+      </div>
+      <div class="field">
+        <label>アルコール検査</label>
+        <div class="radio-group">
+          <div class="radio-opt"><input type="radio" name="alcohol" id="alc-none" value="なし" checked><label for="alc-none">なし</label></div>
+          <div class="radio-opt"><input type="radio" name="alcohol" id="alc-yes" value="あり"><label for="alc-yes">あり</label></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>体調管理</label>
+        <div class="radio-group">
+          <div class="radio-opt"><input type="radio" name="health" id="h-good" value="良好" checked><label for="h-good">良好</label></div>
+          <div class="radio-opt"><input type="radio" name="health" id="h-ok" value="普通"><label for="h-ok">普通</label></div>
+          <div class="radio-opt"><input type="radio" name="health" id="h-bad" value="不調"><label for="h-bad">不調</label></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>天気</label>
+        <div class="radio-group">
+          <div class="radio-opt"><input type="radio" name="weather" id="w-sun" value="晴れ" checked><label for="w-sun">晴れ</label></div>
+          <div class="radio-opt"><input type="radio" name="weather" id="w-cloud" value="曇り"><label for="w-cloud">曇り</label></div>
+          <div class="radio-opt"><input type="radio" name="weather" id="w-rain" value="雨"><label for="w-rain">雨</label></div>
+          <div class="radio-opt"><input type="radio" name="weather" id="w-snow" value="雪"><label for="w-snow">雪</label></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="status-area"></div>
+    <button class="submit-btn" id="submit-btn" onclick="saveReport()">日報を保存してカレンダーに登録</button>
+    <button class="history-btn" onclick="showHistory()">過去の日報を見る</button>
+    <div class="bottom-space"></div>
+  </div>
+
+  <div class="history-view" id="history-view">
+    <button class="back-btn" onclick="showForm()">← 入力画面に戻る</button>
+    <div id="history-list"></div>
+    <div class="bottom-space"></div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzaek-UnE4doKmZy3528E6cwGg7s_nWXCWYBPCNN66ActMOpQx2v1DZJkxkZGoyiPJisQ/exec';
+
+const today = new Date();
+document.getElementById('today-date').textContent = today.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+document.getElementById('date').value = today.toISOString().slice(0,10);
+
+function calcSales() {
+  const p = parseInt(document.getElementById('package-count').value) || 0;
+  const n = parseInt(document.getElementById('nekopos-count').value) || 0;
+  const total = p * 180 + n * 50;
+  document.getElementById('sales-display').textContent = '¥' + total.toLocaleString();
+  document.getElementById('sales-breakdown').textContent = '荷物：' + p + '件 × ¥180 ＋ ネコポス：' + n + '件 × ¥50';
+}
+
+function getRadio(name) {
+  return document.querySelector('input[name="'+name+'"]:checked')?.value || '';
+}
+
+function setStatus(type, msg) {
+  const area = document.getElementById('status-area');
+  if (!type) { area.innerHTML = ''; return; }
+  const spinner = type === 'loading' ? '<div class="spinner"></div>' : '';
+  area.innerHTML = '<div class="status-bar ' + type + '">' + spinner + msg + '</div>';
+}
+
+async function saveReport() {
+  const btn = document.getElementById('submit-btn');
+  const report = {
+    date: document.getElementById('date').value,
+    startTime: document.getElementById('start-time').value,
+    end1: document.getElementById('end1').value,
+    start2: document.getElementById('start2').value,
+    end2: document.getElementById('end2').value,
+    nightStart: document.getElementById('night-start').value,
+    nightEnd: document.getElementById('night-end').value,
+    odoStart: document.getElementById('odo-start').value,
+    odoEnd: document.getElementById('odo-end').value,
+    totalCount: document.getElementById('total-count').value,
+    packageCount: document.getElementById('package-count').value,
+    nekoposCount: document.getElementById('nekopos-count').value,
+    sales: (parseInt(document.getElementById('package-count').value)||0)*180 + (parseInt(document.getElementById('nekopos-count').value)||0)*50,
+    checkerStart: document.getElementById('checker-start').value,
+    checkerEnd: document.getElementById('checker-end').value,
+    alcohol: getRadio('alcohol'),
+    health: getRadio('health'),
+    weather: getRadio('weather'),
+    savedAt: new Date().toISOString()
+  };
+
+  const reports = JSON.parse(localStorage.getItem('daily_reports') || '[]');
+  const idx = reports.findIndex(r => r.date === report.date);
+  if (idx >= 0) reports[idx] = report; else reports.unshift(report);
+  localStorage.setItem('daily_reports', JSON.stringify(reports));
+
+  btn.disabled = true;
+  setStatus('loading', 'Googleカレンダーに登録中...');
+
+  try {
+    await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(report)
+    });
+    setStatus('success', 'カレンダーへの登録が完了しました！');
+  } catch (err) {
+    setStatus('error', '送信失敗。日報はアプリ内に保存済みです。');
+  }
+
+  btn.disabled = false;
+}
+
+function showHistory() {
+  document.getElementById('form-view').classList.add('hidden');
+  document.getElementById('history-view').classList.add('active');
+  const reports = JSON.parse(localStorage.getItem('daily_reports') || '[]');
+  const list = document.getElementById('history-list');
+  if (reports.length === 0) {
+    list.innerHTML = '<div class="empty-state">保存された日報はありません</div>';
+    return;
+  }
+  list.innerHTML = reports.map((r,i) => {
+    const d = new Date(r.date);
+    const label = d.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+    return '<div class="history-item" onclick="showDetail('+i+')">' +
+      '<div class="history-date">' + label + '</div>' +
+      '<div class="history-meta">売上 ¥' + (r.sales||0).toLocaleString() + '　荷物 ' + (r.packageCount||0) + '件　ネコポス ' + (r.nekoposCount||0) + '件</div>' +
+      '</div>';
+  }).join('');
+}
+
+function showDetail(i) {
+  const reports = JSON.parse(localStorage.getItem('daily_reports') || '[]');
+  const r = reports[i];
+  const d = new Date(r.date);
+  const label = d.toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'long'});
+  const fields = [
+    ['日付', label],
+    ['開始時間', r.startTime||'—'],
+    ['1便終了', r.end1||'—'],
+    ['2便開始', r.start2||'—'],
+    ['2便終了', r.end2||'—'],
+    ['夜配開始', r.nightStart||'—'],
+    ['夜配終了', r.nightEnd||'—'],
+    ['開始走行距離', r.odoStart ? r.odoStart+'km' : '—'],
+    ['終了走行距離', r.odoEnd ? r.odoEnd+'km' : '—'],
+    ['配達完了総数', (r.totalCount||'0')+'件'],
+    ['荷物配達完了数', (r.packageCount||'0')+'件'],
+    ['ネコポス完了数', (r.nekoposCount||'0')+'件'],
+    ['1日の売上', '¥'+(r.sales||0).toLocaleString()],
+    ['開始時点呼者', r.checkerStart||'—'],
+    ['終了時点呼者', r.checkerEnd||'—'],
+    ['アルコール', r.alcohol||'—'],
+    ['体調', r.health||'—'],
+    ['天気', r.weather||'—'],
+  ];
+  const list = document.getElementById('history-list');
+  list.innerHTML = '<button class="back-btn" onclick="showHistory()">← 一覧に戻る</button>' +
+    '<div class="detail-card">' +
+    fields.map(([l,v]) => '<div class="detail-row"><span class="detail-label">'+l+'</span><span class="detail-value">'+v+'</span></div>').join('') +
+    '</div>';
+}
+
+function showForm() {
+  document.getElementById('form-view').classList.remove('hidden');
+  document.getElementById('history-view').classList.remove('active');
+}
+</script>
+</body>
+</html>
